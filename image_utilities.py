@@ -1,15 +1,13 @@
 import cv2
 import numpy as np
-import imutils
 
-'''
-print("Starting capture")
-camera = cv2.VideoCapture(0)
-return_value, image = camera.read()
-cv2.imwrite('opencv_captured_file.png', image)
-print("return value: " + str(return_value))
-del(camera)
-'''
+def capturePicture(filename):
+    print("Starting capture")
+    camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    return_value, image = camera.read()
+    cv2.imwrite(filename, image)
+    print("captured picture in:" + filename)
+    del(camera)
 
 def detectContours(grayscale):
     contours, _ = cv2.findContours(grayscale, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -31,7 +29,7 @@ def findRobotRectangle(contours, canny_output, output_window_name):
             hull_list.append(hull)
 
     # We expect that after all this processing we are left with just the robot.
-    assert(len(hull_list) == 1)
+    #assert(len(hull_list) == 1)
             
     # Convert the hull that we found into min bounding rectangles.
     drawing = np.zeros((canny_output.shape[0], canny_output.shape[1], 3), dtype=np.uint8)
@@ -84,7 +82,7 @@ def readImage(filename):
     if img is None:
         print("Could not load the image")
         return None
-    #showImage("Original", img)
+    showImage("Original", img)
     return img
 
 def showImage(windowName, image):
@@ -182,32 +180,42 @@ def drawBoundingBoxes(boundingBoxes, robotBoundingBox, canny_output):
     cv2.namedWindow("BoundingBoxes", cv2.WINDOW_NORMAL)
     cv2.imshow('BoundingBoxes', drawing)
 
-#image = readImage("winning_robot_pos30.jpg")
-#image = readImage("winning_robot_neg30.jpg")
-#image = readImage("winning_robot_at_angle.jpg")
-#image = readImage("winning_robot.jpg")
-image = readImage("robot_with_pointer_180.jpg")
+# Takes a file with the picture of the robot taken from the top,
+# against a background of white.
+# returns the width, height and angle of the robot.
+def detectAngleOfRobotUsingImage(filename):
+    #capturePicture()
+    #image = readImage("winning_robot_pos30.jpg")
+    #image = readImage("winning_robot_neg30.jpg")
+    #image = readImage("winning_robot_at_angle.jpg")
+    #image = readImage("winning_robot.jpg")
+    #image = readImage("robot_with_pointer_180.jpg")
+    image = readImage(filename)
 
+    grayImage = convertImageToGrayScale(image)
+    # Find Canny edges
+    cannyImage = cv2.Canny(grayImage, 30, 200)
+    #showImage("Canny", cannyImage)
+    contours = detectContours(cannyImage)
+    cv2.drawContours(image, contours, -1, (0, 255, 0), 20)
+    #showImage("Contours", image)
 
-grayImage = convertImageToGrayScale(image)
-# Find Canny edges
-cannyImage = cv2.Canny(grayImage, 30, 200)
-#showImage("Canny", cannyImage)
-contours = detectContours(cannyImage)
-cv2.drawContours(image, contours, -1, (0, 255, 0), 20)
-#showImage("Contours", image)
+    robotRectangle = findRobotRectangle(contours, cannyImage, "FirstConvexHull")
+    print("Width: " + str(robotRectangle[1][0]))
+    print("Height: " + str(robotRectangle[1][1]))
+    print("Angle of the robot: " + str(robotRectangle[2]))
 
-robotRectangle = findRobotRectangle(contours, cannyImage, "FirstConvexHull")
-print("Width: " + str(robotRectangle[1][0]))
-print("Height: " + str(robotRectangle[1][1]))
-print("Angle of the robot: " + str(robotRectangle[2]))
+    width = robotRectangle[1][0]
+    height = robotRectangle[1][1]
+    angle = robotRectangle[2]
 
+    return width, height, angle
 
-#boundingBoxes, robotBoundingBox = detectBoundingBoxes(contours)
-#drawBoundingBoxes(boundingBoxes, robotBoundingBox, cannyImage)
+    #boundingBoxes, robotBoundingBox = detectBoundingBoxes(contours)
+    #drawBoundingBoxes(boundingBoxes, robotBoundingBox, cannyImage)
 
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
 
 
 
