@@ -13,14 +13,15 @@ def uploadProgramToHub(filename):
 
 # Creates a simple program to turn the robot using the libraries
 # It passes in the speed and turn angles.
-def createTurnProgram(targetAngle, speed, filename="testProgram.py"):
+def createTurnProgram(targetAngle, speed, turn_deceleration, correction, filename="testProgram.py"):
     file = open(filename, "w")
     file.write("from utilities import *\n")
     file.write("hub = PrimeHub()\n")
     file.write("print(\"Voltage=\" + str(hub.battery.voltage()))\n")
-    file.write("print(\"Start Angle=\" + str(getyawangle()))\n")
-    file.write("turnToAngle(targetAngle=" + str(targetAngle) + ", speed=" + str(speed) + ")\n")
-    file.write("print(\"End Angle=\" + str(getyawangle()))\n")
+    file.write("print(\"Start Angle=\" + str(getHeadingValue()))\n")
+    file.write("turnToAngle(targetAngle=" + str(targetAngle) + ", turn_rate=" + str(speed) + 
+               ", turn_deceleration=" + str(turn_deceleration) + ", correction=" + str(correction) + ")\n")
+    file.write("print(\"End Angle=\" + str(getHeadingValue()))\n")
     file.close()
 
 # Extract voltage from the output of the program
@@ -43,7 +44,7 @@ def extractAngleFromProgramOutput(stringToSearchFor, output):
 
     startAngleStr = ''
     for i in range(startIndex, len(output)):
-        if ((output[i] >= '0' and output[i] <= '9') or output[i] == '.'):
+        if ((output[i] >= '0' and output[i] <= '9') or output[i] == '.' or output[i] == '-'):
             startAngleStr = startAngleStr + output[i]
         else:
             break
