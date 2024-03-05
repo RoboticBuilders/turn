@@ -12,7 +12,7 @@ def finish():
 
 # 1. Takes a picture of the robot first
 # 2. Computes the angle that the robot is at.
-# 3. Creates and run the program for the anglet that we want to turn.
+# 3. Creates and run the program for the angle that we want to turn.
 # 4. Captures the voltage and the gyro readings of the program
 # 5. Takes the end picture
 # 6. computes the end actual angle.
@@ -108,7 +108,7 @@ def tryDifferentAngles(numExperiments):
 
         counterOfBadExperiments = 0
         for iter in range(iterations):
-            print("------------------Starting experiment: 4" + str(expt) + " iteration : " + str(iter) + "-------------------------------------")
+            print("------------------Starting experiment: " + str(expt) + " iteration : " + str(iter) + "-------------------------------------")
             output = runOneTest(angleToTest=targetAngle, speedToTest=speed, turn_deceleration=deceleration, correction=correction)
             output["Experiment"] = expt
             output["Iteration"] = iter

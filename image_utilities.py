@@ -130,7 +130,7 @@ def findRobotRectangle(contours, canny_output, output_window_name, filename, sho
     # Min rectangles cover the robot the rigth way
     rect = cv2.minAreaRect(hull)
     box = cv2.boxPoints(rect)
-    box = np.int0(box)
+    box = np.intp(box)
 
     #Find the rectangle edges and find the longest edge.
     # First find distance between point 0 and point 1
@@ -338,8 +338,6 @@ def detectAngleOfRobotUsingImage(filename, showImages=False):
     #print("Height: " + str(robotRectangle[1][1]))
     #print("Angle of the robot: " + str(robotRectangle[2]))
 
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
 
     width = 0
     height = 0
@@ -354,10 +352,11 @@ def detectAngleOfRobotUsingImage(filename, showImages=False):
     #boundingBoxes, robotBoundingBox = detectBoundingBoxes(contours)
     #drawBoundingBoxes(boundingBoxes, robotBoundingBox, cannyImage)
 
+    if showImages == True:
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
     return foundRobot, width, height, angle, angleOfTheFront
 
 
-
-
-
-
+detectAngleOfRobotUsingImage("C:\\Users\\Vivek\\FLL\\turn\\winning_robot_with_green_circle.jpg", showImages=True)
