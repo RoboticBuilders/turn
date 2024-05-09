@@ -4,11 +4,6 @@ import random
 import datetime
 import csv
 
-def finish():
-    for i in range(1,20):
-        print("\n")
-    input("Press Enter to start experiment...")
-
 # 1. Takes a picture of the robot first
 # 2. Computes the angle that the robot is at.
 # 3. Creates and run the program for the angle that we want to turn.
@@ -24,7 +19,7 @@ def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
     startPicture = capturePicture(startAnglePictureFilename)
 
     print("Dectecting Start angle")
-    startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage(startAnglePictureFilename, 
+    startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage("demo_start_picture.jpg", 
                                                                                            showImages=True)
     print("start angle: " + str(startActualAngle))
 
@@ -42,7 +37,8 @@ def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
     endPicture = capturePicture(endAnglePictureFilename)
 
     print("Dectecting end angle")
-    endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage(endAnglePictureFilename)
+    endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage("demo_end_picture.jpg",
+                                                                                       showLastImage = True)
     print("end angle: " + str(endActualAngle))
 
     outputValues = {}
@@ -65,71 +61,8 @@ def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
 
     return outputValues
 
-'''
-print("Printing output of experiment")
-print("Requested turn angle: " + str(output["RequestedAngle"]))
-print("Requested turn speed: " + str(output["RequestedSpeed"]))
-print("Battery Voltage: " + str(output["voltage"]))
-print("Start angle as measured by Robot Gyro: " + str(output["GyroStartAngle"]))
-print("End angle as measured by Robot Gyro: " + str(output["GyroEndAngle"]))
-print("Real Start Angle (from image processing): " + str(output["ActualStartAngle"]))
-print("Real End angle (from image processing): " + str(output["ActualEndAngle"]))
-'''
-
-
-'''
-print("Angle turned according to gyro: " + str(absoluteError))
-print("Actual angle turned by Robot (from image processing): " + str(absoluteActualError))
-'''
-
-# Method tries different values of turn, speed, deceleration, iteration
-# and records the output.
-def tryDifferentAngles(numExperiments):
-    turnDecelerationToTry = [200, 300, 400, 500]
-    correctionsToTry = [-0.02, -0.01, 0, 0.01, 0.02, 0.03]
-    anglesToTry = [30, 45, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 0]
-    speedsToTry = [200, 300, 400, 500, 600, 700, 800]
-    iterationsToTry = [1, 2, 4]
-
-    f = open("turn_experiment_output.csv", "a")
-    writer = csv.DictWriter(f, ["DateTime", "Experiment", "Iteration", "RequestedAngle", "RequestedSpeed", "voltage", 
-                                "Correction", "Deceleration",
-                                "GyroStartAngle", "GyroEndAngle", 
-                                "ActualStartAngle", "ActualEndAngle",
-                                "GyroError", "ActualError", "StartFoundRobot", "EndFoundRobot"])
-    #writer.writeheader()
-    
-    for expt in range(numExperiments):
-        targetAngle = random.choice(anglesToTry)
-        speed = random.choice(speedsToTry)
-        iterations = random.choice(iterationsToTry)
-        correction = random.choice(correctionsToTry)
-        deceleration = random.choice(turnDecelerationToTry)
-
-        counterOfBadExperiments = 0
-        for iter in range(iterations):
-            print("------------------Starting experiment: " + str(expt) + " iteration : " + str(iter) + "-------------------------------------")
-            output = runOneTest(angleToTest=targetAngle, speedToTest=speed, turn_deceleration=deceleration, correction=correction)
-            output["Experiment"] = expt
-            output["Iteration"] = iter
-
-            # If the start of end image detection did not work, then dont write the output to the file.
-            # increase the counter of the number of times this is happening.
-            if output["StartFoundRobot"] == False or output["EndFoundRobot"] == False:
-                counterOfBadExperiments = counterOfBadExperiments + 1
-                print("------------------Ending iteration :  BAD -------------------------------------")
-            else:
-                print("------------------Ending iteration :  GOOD -------------------------------------")
-                output["DateTime"] = datetime.datetime.now()
-                writer.writerow(output)  
-                
-            f.flush()    
-            
-    f.close()
-
-
 def doOneExperiment():
-    f = open("test_one_experiment.csv", "a")
+    f = open("demo.csv", "a")
     writer = csv.DictWriter(f, ["DateTime", "Experiment", "Iteration", "RequestedAngle", "RequestedSpeed", "voltage", 
                                 "Correction", "Deceleration",
                                 "GyroStartAngle", "GyroEndAngle", 
@@ -138,9 +71,9 @@ def doOneExperiment():
     #writer.writeheader()
 
     # Use some standard values that we want to test to create one datapoint.
-    output = runOneTest(angleToTest=90, speedToTest=300, turn_deceleration=300, correction=0)
+    output = runOneTest(angleToTest=90, speedToTest=800, turn_deceleration=500, correction=0)
     output["Experiment"] = 1
-    output["Iteration"] = iter
+    output["Iteration"] = 1
 
     # If the start of end image detection did not work, then dont write the output to the file.
     # increase the counter of the number of times this is happening.
@@ -154,8 +87,6 @@ def doOneExperiment():
     f.flush()    
     f.close()
 
-# Use this method to actually capture all the data.
-#tryDifferentAngles(50)
-
 # This runs one experiment
+#startPicture = capturePicture("demo_end_picture.jpg")
 doOneExperiment()

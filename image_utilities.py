@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
 import math
+import time
 
-def findCenterOfBlackGear(filename, showImages=False):
+def findCenterOfGreenCircle(filename, showImages=False):
     image = readImage(filename)
 
     # It converts the BGR color space of image to HSV color space
@@ -26,7 +27,7 @@ def findCenterOfBlackGear(filename, showImages=False):
     contours, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if (showImages == True):
         cv2.drawContours(image, contours, -1, (0, 255, 0), 20)
-        showImage("Step 4: Detect GreenCircle Contours", image)
+        showImage("Step 5: Detect GreenCircle Contours", image)
 
     contour = contours[0]
     approx = cv2.approxPolyDP(contour, 0.01* cv2.arcLength(contour, True), True)
@@ -77,11 +78,12 @@ def findAngleOfLine(startX, startY, endX, endY):
 
 def capturePicture(filename):
     #print("Starting capture")
-    camera = cv2.VideoCapture(cv2.CAP_DSHOW)
-    #camera = cv2.VideoCapture(1)
+    camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    #camera = cv2.VideoCapture(cv2.CAP_DSHOW)
     while camera.isOpened() == False:
         # Do nothing.
         pass
+    time.sleep(1)
     return_value, image = camera.read()
     cv2.imwrite(filename, image)
     #print("captured picture in:" + filename)
@@ -89,10 +91,6 @@ def capturePicture(filename):
 
 def detectContours(grayscale):
     contours, _ = cv2.findContours(grayscale, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    #contours, _ = cv2.findContours(grayscale, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    #contours = imutils.grab_contours(contours)
-    #contours, _ = cv2.findContours(grayscale, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    #print("Number of Contours found = " + str(len(contours)))
     return contours
     
 # returns the rectangle that covers the robot.
@@ -107,24 +105,27 @@ def detectContours(grayscale):
 #
 # The co-ordinate plane that this method uses is the robot facing the camera
 # is zero, and the angle increase clockwise from 0-359.
-def findRobotRectangle(contours, canny_output, output_window_name, filename, showImages=False):
+def findRobotRectangle(contours, canny_output, output_window_name, filename, showImages=False,
+                       showLastImage=False):
      # Find the convex hull object for each contour
     hull_list = []
     for i in range(len(contours)):        
         #print(str(cv2.contourArea(contours[i])))
         # Ignore all contours that are small, the robot is quite large.
+        # We know Marvin is atleast 5000 pixels, so we ignore everything smaller.
         if (cv2.contourArea(contours[i]) > 5000):
             hull = cv2.convexHull(contours[i])
             hull_list.append(hull)
 
     # We expect that after all this processing we are left with just the robot.
-    #assert(len(hull_list) == 1)
-
+    # If we dont find such a convex hull or we find more than one, then something really went
+    # wrong and we do not process further, we declare this image processing run a 
+    # failure and just return none, to indicate we could not find the robot rectangle
     if (len(hull_list) != 1):
         return None
+    
     # Convert the hull that we found into min bounding rectangles.
     drawing = np.zeros((canny_output.shape[0], canny_output.shape[1], 3), dtype=np.uint8)
-    color = (255, 255 , 255)
     hull = hull_list[0]
 
     # Min rectangles cover the robot the rigth way
@@ -143,10 +144,11 @@ def findRobotRectangle(contours, canny_output, output_window_name, filename, sho
     if distance0and1 > distance1and2:
         longerEdgeIs0and1 = True
 
-    if (showImages == True):
-        cv2.drawContours(drawing,[box],0,(0,0,255),2)    
+    if (showImages == True or showLastImage == True):
+        cv2.drawContours(drawing,[box],0,(0,0,255),5)    
         cv2.namedWindow(output_window_name, cv2.WINDOW_NORMAL)
         cv2.imshow(output_window_name, drawing)
+        cv2.waitKey(0)
 
     # Find the green circle. Determine which edge the green circle is closest to
 
@@ -154,57 +156,67 @@ def findRobotRectangle(contours, canny_output, output_window_name, filename, sho
     # or 2 and 3. First find which one the circle is closest to.
     # This would be the front of the robot, Once we know the front, then we can decide
     # on the angle or 180+angle.
-    greenCircleX, greenCircleY = findCenterOfBlackGear(filename, showImages=showImages)
+    greenCircleX, greenCircleY = findCenterOfGreenCircle(filename, showImages=False)
     angle = 0
     if longerEdgeIs0and1 == True:
         distanceofGreenCircleFrom0and1 = findDistanceBetweenLineAndPoint(box[0][0],box[0][1], box[1][0], box[1][1], greenCircleX, greenCircleY)
         distanceofGreenCircleFrom2and3 = findDistanceBetweenLineAndPoint(box[2][0],box[2][1], box[3][0], box[3][1], greenCircleX, greenCircleY)
 
         angle = findAngleOfLine(box[0][0], box[0][1], box[1][0],box[1][1])
+        angle = angle + 90
+
         # This means that the 2-3 edge is the front of the robot.
-        if distanceofGreenCircleFrom0and1 < distanceofGreenCircleFrom2and3:
-            # Now determine     
+        if distanceofGreenCircleFrom0and1 > distanceofGreenCircleFrom2and3:     
             angle = angle + 180
     else:
         distanceofGreenCircleFrom1and2 = findDistanceBetweenLineAndPoint(box[1][0],box[1][1], box[2][0], box[2][1], greenCircleX, greenCircleY)
         distanceofGreenCircleFrom3and0 = findDistanceBetweenLineAndPoint(box[3][0],box[3][1], box[0][0], box[0][1], greenCircleX, greenCircleY)
 
         angle = findAngleOfLine(box[1][0], box[1][1], box[2][0],box[2][1])
+        angle = angle - 90
         # This means that the 3-0 edge is the front of the robot.
-        if distanceofGreenCircleFrom1and2 < distanceofGreenCircleFrom3and0:
+        if distanceofGreenCircleFrom1and2 > distanceofGreenCircleFrom3and0:
             angle = angle + 180
 
     if angle < 0:
         angle = angle +360
 
+    if (showImages == True or showLastImage == True):
+        #cv2.drawContours(drawing,[box],0,(0,0,255),5)    
+        cv2.putText(drawing, "ANGLE = " + str(angle), org=(120,120), fontFace = cv2.FONT_HERSHEY_SIMPLEX,
+                    thickness=2, fontScale=1, color=(0,0,255))
+        #cv2.namedWindow("Final output angle", cv2.WINDOW_NORMAL)
+        cv2.imshow(output_window_name, drawing)
+        cv2.waitKey(0)
+    else:
+        print("angle = " + str(angle))
+
     return rect, angle
 
-def convertImageToGrayScale(image):
+def convertImageToGrayScale(image, showImages):
     # converting image into grayscale image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    if showImages == True:
+        showImage("Step 0a: GrayScale", gray)
 
-    '''
-    # setting threshold of gray image
-    _, threshold_img_ostu = cv2.threshold(gray,150,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-    showImage("GrayScale OSTU", threshold_img_ostu)
-    '''
-
-    '''
-    _, threshold_img = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
-    showImage("GrayScale Binary", threshold_img)
-    '''
-    
     blur = cv2.GaussianBlur(gray,(17,17),0)
+    if showImages == True:
+        showImage("Step 0b: Gaussian Blur", blur)
+
+    # thresh = 170 and maxValue = 255. We use THRESH_BINARY_THRESH_OTSU algotithm which
+    # we found to be best after trial and error. 
+    # OTSU uses a histogram of the gray scale image to find the best point to separate
+    # Binary just compares with a given value.
     _,threshold_img_blur_ostu = cv2.threshold(blur,170,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-    #showImage("GrayScale OSTU BLUR", threshold_img_blur_ostu)
-    threshold_img = threshold_img_blur_ostu
     
-    # Use a kernel to erode and dilate the picture so we can capture the contours better.
+    threshold_img = threshold_img_blur_ostu
+    if showImages == True:
+        showImage("Step 0c: Thresholded image", threshold_img)
+     
+    # Use a 10x10 kernel to erode and dilate the picture so we can capture the contours better.
     kernel = np.ones((10,10),np.uint8)
     threshold_img = cv2.erode(threshold_img, kernel, iterations=5)
     threshold_img = cv2.dilate(threshold_img, kernel, iterations=2)
-    #threshold_img = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY,21,10)
-    #showImage("GrayScale", threshold_img)
     return threshold_img
 
 # readimage and convert into gray scale.
@@ -294,50 +306,39 @@ def detectBoundingBoxes(contours):
     robotBoundingBox = [minX, minY, maxX, maxY]
     return boundRect, robotBoundingBox
 
-# Draws all the boundingBoxes, it also takes as input a robotBoundingbox
-# The robotBoundingBox is represented as [minX,minY, maxX, maxY]
-def drawBoundingBoxes(boundingBoxes, robotBoundingBox, canny_output):
-    drawing = np.zeros((canny_output.shape[0], canny_output.shape[1], 3), dtype=np.uint8)
-    color = (0,0,255)
-    for boundingBox in boundingBoxes:
-        #cv2.rectangle(drawing, boundingBox, color, 10)
-        if (boundingBox[2] > 50 and boundingBox[3] > 50):
-            cv2.rectangle(drawing, 
-                        (int(boundingBox[0]), int(boundingBox[1])),
-                        (int(boundingBox[0]+boundingBox[2]), int(boundingBox[1]+boundingBox[3])), 
-                        color, 20)
-
-    # Now draw the robot bounding box around the robot.
-    cv2.rectangle(drawing, (robotBoundingBox[0], robotBoundingBox[1]), (robotBoundingBox[2], robotBoundingBox[3]), (255,0,0), 20)        
-    cv2.namedWindow("BoundingBoxes", cv2.WINDOW_NORMAL)
-    cv2.imshow('BoundingBoxes', drawing)
-
 # Takes a file with the picture of the robot taken from the top,
 # against a background of white.
 # returns the width, height and angle of the robot.
-def detectAngleOfRobotUsingImage(filename, showImages=False):
+def detectAngleOfRobotUsingImage(filename, showImages=False, showLastImage=False):
     image = readImage(filename)
     if (showImages == True):
         showImage("Step 0: Input Image", image)
+        cv2.waitKey(0)
 
+    grayImage = convertImageToGrayScale(image, showImages=False)
+    if (showImages == True):
+        showImage("Step 1: GrayScale and Thresholded Image", grayImage)
+        cv2.waitKey(0)
 
-    grayImage = convertImageToGrayScale(image)
     # Find Canny edges. These values found after some trial and error.
     cannyImage = cv2.Canny(grayImage, 30, 200)
     if (showImages == True):
-        showImage("Step 1: Canny on GrayScale Image", cannyImage)
+        showImage("Step 2: Canny on GrayScale Image", cannyImage)
+        cv2.waitKey(0)
 
     # Next detect the contours.
     contours = detectContours(cannyImage)
     if (showImages == True):
         cv2.drawContours(image, contours, -1, (0, 255, 0), 20)
-        showImage("Step 2: Contours on the CannyImage", image)
+        showImage("Step 3: Contours on the CannyImage", image)
+        cv2.waitKey(0)
 
-    robotRectangle, angleOfTheFront = findRobotRectangle(contours, cannyImage, "Step 3: MinimumRectangleAroundConvexHull", filename, showImages=showImages)
+    robotRectangle, angleOfTheFront = findRobotRectangle(contours, cannyImage, "Step 4: MinimumRectangleAroundConvexHull", 
+                                                         filename, showImages=showImages,
+                                                         showLastImage=showLastImage)
     #print("Width: " + str(robotRectangle[1][0]))
     #print("Height: " + str(robotRectangle[1][1]))
     #print("Angle of the robot: " + str(robotRectangle[2]))
-
 
     width = 0
     height = 0
@@ -349,14 +350,8 @@ def detectAngleOfRobotUsingImage(filename, showImages=False):
         angle = robotRectangle[2]
         foundRobot = True
 
-    #boundingBoxes, robotBoundingBox = detectBoundingBoxes(contours)
-    #drawBoundingBoxes(boundingBoxes, robotBoundingBox, cannyImage)
-
     if showImages == True:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
     return foundRobot, width, height, angle, angleOfTheFront
-
-
-detectAngleOfRobotUsingImage("C:\\Users\\Vivek\\FLL\\turn\\winning_robot_with_green_circle.jpg", showImages=True)

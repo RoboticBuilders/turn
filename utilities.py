@@ -6,14 +6,26 @@ from pybricks.tools import wait, StopWatch
 
 hub = PrimeHub()
 
-left_motor = Motor(Port.B,Direction.COUNTERCLOCKWISE)
-right_motor = Motor(Port.F)
+# Here are the final ports for all the motors and sensors.
+# Please don't change these
+left_motor = Motor(Port.C, Direction.COUNTERCLOCKWISE)
+right_motor = Motor(Port.E)
+left_med_motor = Motor(Port.B) 
+right_med_motor = Motor(Port.D)
 
-color_sensor = ColorSensor(Port.C)
-bucket_arm = Motor(Port.E)
-whale_arm = Motor(Port.A)
-whacker = Motor(Port.D)
-drive_base = GyroDriveBase(left_motor, right_motor, wheel_diameter=88, axle_track=112)
+#left_color = None
+#left_color = ColorSensor(Port.A)
+right_color = ColorSensor(Port.F)
+
+hub = PrimeHub()
+
+wheel_radius = 44
+axle_track = 118
+drive_base = robot = GyroDriveBase(
+    left_motor,
+    right_motor,
+    wheel_diameter=88,
+    axle_track= 122)
 
 def getHeadingValue():
     return str(hub.imu.heading())
