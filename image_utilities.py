@@ -10,11 +10,11 @@ def findCenterOfGreenCircle(filename, showImages=False):
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     
     # Threshold of green in HSV space
-    lower_blue = np.array([55, 60, 60])
-    upper_blue = np.array([70, 255, 255])
+    lower_green = np.array([55, 60, 60])
+    upper_green = np.array([70, 255, 255])
 
     # preparing the mask to overlay
-    mask = cv2.inRange(hsv, lower_blue, upper_blue)
+    mask = cv2.inRange(hsv, lower_green, upper_green)
     
     # The black region in the mask has the value of 0,
     # so when multiplied with original image removes all non-blue regions
@@ -29,9 +29,12 @@ def findCenterOfGreenCircle(filename, showImages=False):
         cv2.drawContours(image, contours, -1, (0, 255, 0), 20)
         showImage("Step 5: Detect GreenCircle Contours", image)
 
+    # Approximate the contour using the Approximate Polygon method.
     contour = contours[0]
     approx = cv2.approxPolyDP(contour, 0.01* cv2.arcLength(contour, True), True)
     #cv2.drawContours(image, [approx], 0, (0, 0, 0), 5)
+    
+    # Return the center of the approximated polygon.
     x = approx.ravel()[0]
     y = approx.ravel()[1] - 5
     
@@ -84,7 +87,7 @@ def capturePicture(filename):
         # Do nothing.
         pass
     time.sleep(1)
-    return_value, image = camera.read()
+    _, image = camera.read()
     cv2.imwrite(filename, image)
     #print("captured picture in:" + filename)
     del(camera)
@@ -92,7 +95,7 @@ def capturePicture(filename):
 def detectContours(grayscale):
     contours, _ = cv2.findContours(grayscale, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     return contours
-    
+
 # returns the rectangle that covers the robot.
 # Also returns the Angle of the robot rectangle.
 # This method first finds the robot rectangle, then it finds the longer edge of the 
@@ -125,6 +128,7 @@ def findRobotRectangle(contours, canny_output, output_window_name, filename, sho
         return None
     
     # Convert the hull that we found into min bounding rectangles.
+    # This is used for Debugging.
     drawing = np.zeros((canny_output.shape[0], canny_output.shape[1], 3), dtype=np.uint8)
     hull = hull_list[0]
 
@@ -132,20 +136,13 @@ def findRobotRectangle(contours, canny_output, output_window_name, filename, sho
     rect = cv2.minAreaRect(hull)
     box = cv2.boxPoints(rect)
     box = np.intp(box)
-
-    #Find the rectangle edges and find the longest edge.
-    # First find distance between point 0 and point 1
-    distance0and1 = math.sqrt((box[0][0] - box[1][0]) ** 2 + (box[0][1]-box[1][1]) ** 2)
-    distance1and2 = math.sqrt((box[1][0] - box[2][0]) ** 2 + (box[1][1]-box[2][1]) ** 2)
-
-    # Find the longer edge. This edge either the front of the rear of the robot.
-    angleOfTheFront = 0
-    longerEdgeIs0and1 = False
-    if distance0and1 > distance1and2:
-        longerEdgeIs0and1 = True
-
+    
     if (showImages == True or showLastImage == True):
         cv2.drawContours(drawing,[box],0,(0,0,255),5)    
+        #for i in range(4):
+        #    cv2.putText(drawing, str(box[i][0]) + str(",") + str(box[i][1]), 
+        #                org=(box[i][0],box[i][1]), fontFace = cv2.FONT_HERSHEY_SIMPLEX,
+        #                thickness=1, fontScale=1, color=(255,255,255))
         cv2.namedWindow(output_window_name, cv2.WINDOW_NORMAL)
         cv2.imshow(output_window_name, drawing)
         cv2.waitKey(0)
@@ -158,28 +155,49 @@ def findRobotRectangle(contours, canny_output, output_window_name, filename, sho
     # on the angle or 180+angle.
     greenCircleX, greenCircleY = findCenterOfGreenCircle(filename, showImages=False)
     angle = 0
-    if longerEdgeIs0and1 == True:
-        distanceofGreenCircleFrom0and1 = findDistanceBetweenLineAndPoint(box[0][0],box[0][1], box[1][0], box[1][1], greenCircleX, greenCircleY)
-        distanceofGreenCircleFrom2and3 = findDistanceBetweenLineAndPoint(box[2][0],box[2][1], box[3][0], box[3][1], greenCircleX, greenCircleY)
+    
+    # Dictionary of key=distance, value=which edge. 
+    # Edge0 = Edge between box[0] and box[1]
+    # Edge1 = Edge between box[1] and box[2] etc.
+    # We do this because it is easy to sort the dictionary and find which
+    # edge we should use to find the angle of the robot.
+    distancesFromGreenCircle = {}
+    distanceofGreenCircleFrom0and1 = findDistanceBetweenLineAndPoint(box[0][0],box[0][1], 
+                                                                     box[1][0], box[1][1], 
+                                                                     greenCircleX, greenCircleY)
+    distancesFromGreenCircle[distanceofGreenCircleFrom0and1] = "Edge0"
+    distanceofGreenCircleFrom1and2 = findDistanceBetweenLineAndPoint(box[1][0],box[1][1], 
+                                                                     box[2][0], box[2][1], 
+                                                                     greenCircleX, greenCircleY)
+    distancesFromGreenCircle[distanceofGreenCircleFrom1and2] = "Edge1"
+    distanceofGreenCircleFrom2and3 = findDistanceBetweenLineAndPoint(box[2][0],box[2][1], 
+                                                                     box[3][0], box[3][1], 
+                                                                     greenCircleX, greenCircleY)
+    distancesFromGreenCircle[distanceofGreenCircleFrom2and3] = "Edge2"
+    distanceofGreenCircleFrom3and0 = findDistanceBetweenLineAndPoint(box[3][0],box[3][1], 
+                                                                     box[0][0], box[0][1], 
+                                                                     greenCircleX, greenCircleY)
+    distancesFromGreenCircle[distanceofGreenCircleFrom3and0] = "Edge3"
 
+    # Distances sorted, to find which edge is closest to the green circle.
+    # Once we have that edge, we can then calculate the angle of the edge.
+    sortedDistancesFromGreenCircle = dict(sorted(distancesFromGreenCircle.items()))
+
+    # Get the first key in the dictionary. This is the edge that is closest to the green circle.
+    closestEdge = None
+    for key in sortedDistancesFromGreenCircle.values():
+        closestEdge = key
+        break
+
+    #closestEdge = distancesFromGreenCircle.items()[0]
+    if closestEdge == "Edge0":
         angle = findAngleOfLine(box[0][0], box[0][1], box[1][0],box[1][1])
-        angle = angle + 90
-
-        # This means that the 2-3 edge is the front of the robot.
-        if distanceofGreenCircleFrom0and1 > distanceofGreenCircleFrom2and3:     
-            angle = angle + 180
-    else:
-        distanceofGreenCircleFrom1and2 = findDistanceBetweenLineAndPoint(box[1][0],box[1][1], box[2][0], box[2][1], greenCircleX, greenCircleY)
-        distanceofGreenCircleFrom3and0 = findDistanceBetweenLineAndPoint(box[3][0],box[3][1], box[0][0], box[0][1], greenCircleX, greenCircleY)
-
+    elif closestEdge == "Edge1":
         angle = findAngleOfLine(box[1][0], box[1][1], box[2][0],box[2][1])
-        angle = angle - 90
-        # This means that the 3-0 edge is the front of the robot.
-        if distanceofGreenCircleFrom1and2 > distanceofGreenCircleFrom3and0:
-            angle = angle + 180
-
-    if angle < 0:
-        angle = angle +360
+    elif closestEdge == "Edge2":
+        angle = findAngleOfLine(box[3][0], box[3][1], box[2][0],box[2][1])
+    elif closestEdge == "Edge3":
+        angle = findAngleOfLine(box[0][0], box[0][1], box[3][0],box[3][1])
 
     if (showImages == True or showLastImage == True):
         #cv2.drawContours(drawing,[box],0,(0,0,255),5)    
@@ -193,17 +211,23 @@ def findRobotRectangle(contours, canny_output, output_window_name, filename, sho
 
     return rect, angle
 
+
 def convertImageToGrayScale(image, showImages):
     # converting image into grayscale image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     if showImages == True:
         showImage("Step 0a: GrayScale", gray)
 
+    # Smoothen the image using gaussian blue. 
+    # We apply this to remove any noise in the white background, at the same time 
+    # keeping the robot obvious and detectable.
+    # The kernel needs to be a square with odd width and height
     blur = cv2.GaussianBlur(gray,(17,17),0)
     if showImages == True:
         showImage("Step 0b: Gaussian Blur", blur)
 
-    # thresh = 170 and maxValue = 255. We use THRESH_BINARY_THRESH_OTSU algotithm which
+    # We then apply the threshod to the gaussian blurred image.
+    # thresh = 170 and maxValue = 255. We use THRESH_BINARY_THRESH_OTSU Algorithm which
     # we found to be best after trial and error. 
     # OTSU uses a histogram of the gray scale image to find the best point to separate
     # Binary just compares with a given value.
@@ -315,7 +339,7 @@ def detectAngleOfRobotUsingImage(filename, showImages=False, showLastImage=False
         showImage("Step 0: Input Image", image)
         cv2.waitKey(0)
 
-    grayImage = convertImageToGrayScale(image, showImages=False)
+    grayImage = convertImageToGrayScale(image, showImages=True)
     if (showImages == True):
         showImage("Step 1: GrayScale and Thresholded Image", grayImage)
         cv2.waitKey(0)

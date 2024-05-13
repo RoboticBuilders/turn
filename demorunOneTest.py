@@ -21,6 +21,8 @@ def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
     print("Dectecting Start angle")
     startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage("demo_start_picture.jpg", 
                                                                                            showImages=True)
+    #startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage(startAnglePictureFilename, 
+    #                                                                                       showImages=False)
     print("start angle: " + str(startActualAngle))
 
     programFilename = "testProgram.py"
@@ -39,6 +41,8 @@ def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
     print("Dectecting end angle")
     endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage("demo_end_picture.jpg",
                                                                                        showLastImage = True)
+    #endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage(endAnglePictureFilename,
+    #                                                                                   showLastImage = False)
     print("end angle: " + str(endActualAngle))
 
     outputValues = {}
@@ -88,5 +92,4 @@ def doOneExperiment():
     f.close()
 
 # This runs one experiment
-#startPicture = capturePicture("demo_end_picture.jpg")
 doOneExperiment()

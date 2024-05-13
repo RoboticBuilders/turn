@@ -21,7 +21,7 @@ def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
     endAnglePictureFilename = "endangle_robot_picture.png"
 
     print("Capturing start picture")
-    startPicture = capturePicture(startAnglePictureFilename)
+    capturePicture(startAnglePictureFilename)
 
     print("Dectecting Start angle")
     startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage(startAnglePictureFilename, 
@@ -39,7 +39,7 @@ def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
     print("Extracted params from run: voltage:" + str(voltage) + " startAngle:" +str(startAngle) + " endAngle:" + str(endAngle))
 
     print("Capturing end picture")
-    endPicture = capturePicture(endAnglePictureFilename)
+    capturePicture(endAnglePictureFilename)
 
     print("Dectecting end angle")
     endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage(endAnglePictureFilename)
@@ -92,6 +92,7 @@ def tryDifferentAngles(numExperiments):
     iterationsToTry = [1, 2, 4]
 
     f = open("turn_experiment_output.csv", "a")
+    #f = open("test.csv", "a")
     writer = csv.DictWriter(f, ["DateTime", "Experiment", "Iteration", "RequestedAngle", "RequestedSpeed", "voltage", 
                                 "Correction", "Deceleration",
                                 "GyroStartAngle", "GyroEndAngle", 
@@ -155,7 +156,5 @@ def doOneExperiment():
     f.close()
 
 # Use this method to actually capture all the data.
-#tryDifferentAngles(50)
+tryDifferentAngles(50)
 
-# This runs one experiment
-doOneExperiment()
