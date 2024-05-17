@@ -17,7 +17,7 @@ def findCenterOfGreenCircle(filename, showImages=False):
     mask = cv2.inRange(hsv, lower_green, upper_green)
     
     # The black region in the mask has the value of 0,
-    # so when multiplied with original image removes all non-blue regions
+    # so when multiplied with original image removes all non-green regions
     result = cv2.bitwise_and(image, image, mask = mask)
 
     gray = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
@@ -153,7 +153,7 @@ def findRobotRectangle(contours, canny_output, output_window_name, filename, sho
     # or 2 and 3. First find which one the circle is closest to.
     # This would be the front of the robot, Once we know the front, then we can decide
     # on the angle or 180+angle.
-    greenCircleX, greenCircleY = findCenterOfGreenCircle(filename, showImages=False)
+    greenCircleX, greenCircleY = findCenterOfGreenCircle(filename, showImages=True)
     angle = 0
     
     # Dictionary of key=distance, value=which edge. 

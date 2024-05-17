@@ -12,15 +12,16 @@ import csv
 # 6. computes the end actual angle.
 # 7. returns all of this as output.
 def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
-    startAnglePictureFilename = "startangle_robot_picture.png"
-    endAnglePictureFilename = "endangle_robot_picture.png"
+    #startAnglePictureFilename = "startangle_robot_picture.png"
+    #endAnglePictureFilename = "endangle_robot_picture.png"
+    startAnglePictureFilename = "test_start_picture.jpg"
+    endAnglePictureFilename = "test_end_picture.jpg"
 
     print("Capturing start picture")
-    startPicture = capturePicture(startAnglePictureFilename)
-
+    capturePicture(startAnglePictureFilename)
 
     print("Dectecting Start angle")
-    startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage("demo_start_picture.jpg", 
+    startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage(startAnglePictureFilename, 
                                                                                            showImages=True)
     #startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage(startAnglePictureFilename, 
     #                                                                                       showImages=False)
@@ -40,7 +41,7 @@ def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
     endPicture = capturePicture(endAnglePictureFilename)
 
     print("Dectecting end angle")
-    endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage("demo_end_picture.jpg",
+    endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage(endAnglePictureFilename,
                                                                                        showLastImage = True)
     #endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage(endAnglePictureFilename,
     #                                                                                   showLastImage = False)
@@ -76,7 +77,7 @@ def doOneExperiment():
     #writer.writeheader()
 
     # Use some standard values that we want to test to create one datapoint.
-    output = runOneTest(angleToTest=90, speedToTest=800, turn_deceleration=500, correction=0)
+    output = runOneTest(angleToTest=45, speedToTest=800, turn_deceleration=500, correction=0)
     output["Experiment"] = 1
     output["Iteration"] = 1
 

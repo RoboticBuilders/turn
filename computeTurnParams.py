@@ -156,5 +156,5 @@ def doOneExperiment():
     f.close()
 
 # Use this method to actually capture all the data.
-tryDifferentAngles(50)
+tryDifferentAngles(5)
 
