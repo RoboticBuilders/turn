@@ -18,6 +18,7 @@ def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
     print("Capturing start picture")
     startPicture = capturePicture(startAnglePictureFilename)
 
+
     print("Dectecting Start angle")
     startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage("demo_start_picture.jpg", 
                                                                                            showImages=True)

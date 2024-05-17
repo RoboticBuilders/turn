@@ -81,7 +81,7 @@ def findAngleOfLine(startX, startY, endX, endY):
 
 def capturePicture(filename):
     #print("Starting capture")
-    camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
     #camera = cv2.VideoCapture(cv2.CAP_DSHOW)
     while camera.isOpened() == False:
         # Do nothing.
@@ -231,7 +231,7 @@ def convertImageToGrayScale(image, showImages):
     # we found to be best after trial and error. 
     # OTSU uses a histogram of the gray scale image to find the best point to separate
     # Binary just compares with a given value.
-    _,threshold_img_blur_ostu = cv2.threshold(blur,170,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    _,threshold_img_blur_ostu = cv2.threshold(blur,170,255,cv2.THRESH_OTSU)
     
     threshold_img = threshold_img_blur_ostu
     if showImages == True:
