@@ -364,18 +364,12 @@ def detectAngleOfRobotUsingImage(filename, showImages=False, showLastImage=False
     #print("Height: " + str(robotRectangle[1][1]))
     #print("Angle of the robot: " + str(robotRectangle[2]))
 
-    width = 0
-    height = 0
-    angle = 0
     foundRobot = False
     if robotRectangle != None:
-        width = robotRectangle[1][0]
-        height = robotRectangle[1][1]
-        angle = robotRectangle[2]
         foundRobot = True
 
     if showImages == True:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-    return foundRobot, width, height, angle, angleOfTheFront
+    return foundRobot, angleOfTheFront
