@@ -339,7 +339,7 @@ def detectAngleOfRobotUsingImage(filename, showImages=False, showLastImage=False
         showImage("Step 0: Input Image", image)
         cv2.waitKey(0)
 
-    grayImage = convertImageToGrayScale(image, showImages=True)
+    grayImage = convertImageToGrayScale(image, showImages=False)
     if (showImages == True):
         showImage("Step 1: GrayScale and Thresholded Image", grayImage)
         cv2.waitKey(0)
