@@ -12,16 +12,14 @@ import csv
 # 6. computes the end actual angle.
 # 7. returns all of this as output.
 def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
-    #startAnglePictureFilename = "startangle_robot_picture.png"
-    #endAnglePictureFilename = "endangle_robot_picture.png"
-    startAnglePictureFilename = "test_start_picture.jpg"
-    endAnglePictureFilename = "test_end_picture.jpg"
+    startAnglePictureFilename = "startangle_robot_picture.png"
+    endAnglePictureFilename = "endangle_robot_picture.png"
 
     print("Capturing start picture")
     capturePicture(startAnglePictureFilename)
 
     print("Dectecting Start angle")
-    startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage(startAnglePictureFilename, 
+    startFoundRobot, startActualAngle = detectAngleOfRobotUsingImage("demo_start_picture.jpg", 
                                                                                            showImages=True)
     #startFoundRobot, width, height, angle, startActualAngle = detectAngleOfRobotUsingImage(startAnglePictureFilename, 
     #                                                                                       showImages=False)
@@ -41,7 +39,7 @@ def runOneTest(angleToTest, speedToTest, turn_deceleration, correction):
     endPicture = capturePicture(endAnglePictureFilename)
 
     print("Dectecting end angle")
-    endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage(endAnglePictureFilename,
+    endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage("demo_end_picture.jpg",
                                                                                        showLastImage = True)
     #endFoundRobot, width, height, angle, endActualAngle = detectAngleOfRobotUsingImage(endAnglePictureFilename,
     #                                                                                   showLastImage = False)

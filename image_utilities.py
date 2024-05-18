@@ -81,7 +81,7 @@ def findAngleOfLine(startX, startY, endX, endY):
 
 def capturePicture(filename):
     #print("Starting capture")
-    camera = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+    camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     #camera = cv2.VideoCapture(cv2.CAP_DSHOW)
     while camera.isOpened() == False:
         # Do nothing.
@@ -153,7 +153,7 @@ def findRobotRectangle(contours, canny_output, output_window_name, filename, sho
     # or 2 and 3. First find which one the circle is closest to.
     # This would be the front of the robot, Once we know the front, then we can decide
     # on the angle or 180+angle.
-    greenCircleX, greenCircleY = findCenterOfGreenCircle(filename, showImages=True)
+    greenCircleX, greenCircleY = findCenterOfGreenCircle(filename, showImages=False)
     angle = 0
     
     # Dictionary of key=distance, value=which edge. 
